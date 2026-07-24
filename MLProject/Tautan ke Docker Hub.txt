@@ -1,0 +1,1 @@
+https://hub.docker.com/repository/docker/adjiepratama1213/titanic-model/general
