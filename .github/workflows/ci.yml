@@ -27,13 +27,13 @@ jobs:
           cd MLProject
           mlflow run . --env-manager=local
           
-      - name: Get latest MLflow run_id
-        id: get_run_id
+      - name: Find model path
+        id: find_model
         run: |
           cd MLProject
-          RUN_ID=$(python -c "import mlflow; runs = mlflow.search_runs(experiment_ids=['0'], order_by=['start_time DESC']); print(runs.iloc[0]['run_id'])")
-          echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
-          echo "Latest Run ID is $RUN_ID"
+          MODEL_PATH=$(find mlruns -path "*/artifacts/model/MLmodel" -print -quit | sed 's|/MLmodel$||')
+          echo "MODEL_PATH=$MODEL_PATH" >> $GITHUB_ENV
+          echo "Model found at: $MODEL_PATH"
 
       - name: Upload to GitHub
         uses: actions/upload-artifact@v4
@@ -44,7 +44,7 @@ jobs:
       - name: Build Docker Model
         run: |
           cd MLProject
-          mlflow models build-docker -m mlruns/0/${{ env.RUN_ID }}/artifacts/model -n ${{ secrets.DOCKER_USERNAME }}/titanic-model:latest --env-manager conda
+          mlflow models build-docker -m "${{ env.MODEL_PATH }}" -n ${{ secrets.DOCKER_USERNAME }}/titanic-model:latest --env-manager local
           
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
